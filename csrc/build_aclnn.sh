@@ -222,8 +222,12 @@ elif [[ "$SOC_VERSION" =~ ^ascend950 ]]; then
         "hc_pre_inv_rms"
         "hc_post"
         "grouped_matmul_swiglu_quant_v2"
+        "add_rms_norm_bias"
+        "causal_conv1d"
+        "recurrent_gated_delta_rule"
+        "chunk_fwd_o"
+        "chunk_gated_delta_rule_fwd_h"
     )
-
     CUSTOM_OPS=$(IFS=';'; echo "${CUSTOM_OPS_ARRAY[*]}")
     SOC_ARG="ascend950"
 else

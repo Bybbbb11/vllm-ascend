@@ -492,7 +492,7 @@ class AddRMSNormQuantFusionPass(VllmInductorPass):
         for eps in common_epsilons:
             AddRMSNormDynamicQuantPattern(vllm_config, eps=eps).register(self.pattern_match_passes)
             AddRMSNormDynamicQuantSPPattern(vllm_config, eps=eps).register(self.pattern_match_passes)
-            if enable_custom_op():
+            if enable_custom_op() and get_ascend_device_type() != AscendDeviceType.A5:
                 AddRMSNormQuantPattern(vllm_config, eps=eps).register(self.pattern_match_passes)
                 AddRMSNormQuantSPPattern(vllm_config, eps=eps).register(self.pattern_match_passes)
                 AddRMSNormQuantPatternWithBias(vllm_config, eps=eps).register(self.pattern_match_passes)

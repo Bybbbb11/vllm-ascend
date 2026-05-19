@@ -620,7 +620,7 @@ class KVCacheRecvingThread(threading.Thread):
         use_fused_op = ascend_envs.VLLM_ASCEND_FUSION_OP_TRANSPOSE_KV_CACHE_BY_BLOCK
         if need_nz_cache or need_cat_cache:
             # use fused op to reformat kv cache, we keep original implementation to provide ability to disable it.
-            if use_fused_op and enable_custom_op():
+            if use_fused_op and enable_custom_op() and get_ascend_device_type() != AscendDeviceType.A5:
                 if need_cat_cache:
                     # the fused op only support cat GQA/MHA kv cache by head
                     self.reformat_kv_cache_with_fused_op(grouped_local_block_ids, tp_num_need_pulls)

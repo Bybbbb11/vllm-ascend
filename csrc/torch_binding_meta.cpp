@@ -632,6 +632,23 @@ at::Tensor npu_recurrent_gated_delta_rule_310_meta(
     return output;
 }
 
+at::Tensor npu_recurrent_gated_delta_rule_custom_meta(
+    const at::Tensor& query,
+    const at::Tensor& key,
+    const at::Tensor& value,
+    const at::Tensor& beta,
+    at::Tensor& state,
+    const at::Tensor& actual_seq_lengths,
+    const at::Tensor& ssm_state_indices,
+    const c10::optional<at::Tensor>& g,
+    const c10::optional<at::Tensor>& gk,
+    const c10::optional<at::Tensor>& num_accepted_tokens,
+    double scale_value)
+{
+    at::Tensor output = at::empty_symint(value.sym_sizes(), value.options());
+    return output;
+}
+
 std::vector<at::Tensor> moe_grouped_matmul_meta(
     at::Tensor x,
     at::Tensor weight,
@@ -1228,8 +1245,22 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> chunk_gated_delta_rule_fwd_h_meta
     bool output_final_state_ = output_final_state.has_value() ? output_final_state.value() : false;
     const at::Tensor &initial_state_ = c10::value_or_else(initial_state, [] { return at::Tensor(); });
     int64_t chunk_size_ = chunk_size.has_value() ? chunk_size.value() : 64;
-    const at::Tensor &g_ = c10::value_or_else(g, [] { return at::Tensor(); });
+    TORCH_CHECK(g.has_value() && g->defined(),
+                "chunk_gated_delta_rule_fwd_h requires g; g=None is not supported by the AscendC custom op.");
+    TORCH_CHECK(!gk.has_value() || !gk->defined(),
+                "chunk_gated_delta_rule_fwd_h does not support gk.");
+    bool save_new_value_ = save_new_value.value_or(true);
+    bool use_exp2_ = use_exp2.value_or(false);
+    bool transpose_state_layout_ = transpose_state_layout.value_or(false);
+    TORCH_CHECK(save_new_value_, "chunk_gated_delta_rule_fwd_h only supports save_new_value=True.");
+    TORCH_CHECK(!use_exp2_, "chunk_gated_delta_rule_fwd_h only supports use_exp2=False.");
+    TORCH_CHECK(!transpose_state_layout_,
+                "chunk_gated_delta_rule_fwd_h only supports transpose_state_layout=False.");
+    const at::Tensor &g_ = *g;
     const at::Tensor &gk_ = c10::value_or_else(gk, [] { return at::Tensor(); });
+    (void)initial_state_;
+    (void)g_;
+    (void)gk_;
 
     auto k_sizes = k.sizes();
     auto u_sizes = u.sizes();
@@ -1258,10 +1289,6 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> chunk_gated_delta_rule_fwd_h_meta
         final_state_out = at::empty({1}, k.options());
     }
 
-    bool save_new_value_ = save_new_value.value_or(true);
-    bool use_exp2_ = use_exp2.value_or(false);
-    bool transpose_state_layout_ = transpose_state_layout.value_or(false);
-
     if (output_final_state_) {
         return std::make_tuple(h_out, v_new_out, final_state_out);
     } else {
@@ -1284,9 +1311,15 @@ at::Tensor chunk_fwd_o_meta(
 {
     at::Tensor o = at::zeros(v.sizes(), v.options());
     int64_t chunk_size_ = chunk_size.has_value() ? chunk_size.value() : 64;
-    const at::Tensor &g_ = c10::value_or_else(g, [] { return at::Tensor(); });
-    (void)g_gamma;
-    (void)transpose_state_layout;
+    TORCH_CHECK(g.has_value() && g->defined(),
+                "chunk_fwd_o requires g; g=None is not supported by the AscendC custom op.");
+    TORCH_CHECK(!g_gamma.has_value() || !g_gamma->defined(),
+                "chunk_fwd_o does not support g_gamma.");
+    TORCH_CHECK(!transpose_state_layout.value_or(false),
+                "chunk_fwd_o only supports transpose_state_layout=False.");
+    const at::Tensor &g_ = *g;
+    (void)chunk_size_;
+    (void)g_;
 
     return o;
 }
@@ -1360,6 +1393,9 @@ TORCH_LIBRARY_IMPL_EXPAND(CONCAT(_C, _ascend), Meta, ops) {
     ops.impl("npu_copy_and_expand_eagle_inputs", &vllm_ascend::meta::npu_copy_and_expand_eagle_inputs_meta);
     // causal_conv1d_fn
     ops.impl("npu_causal_conv1d_custom", &vllm_ascend::meta::npu_causal_conv1d_custom_meta);
+    // recurrent_gated_delta_rule custom
+    ops.impl("npu_recurrent_gated_delta_rule_custom",
+             &vllm_ascend::meta::npu_recurrent_gated_delta_rule_custom_meta);
     // moe_grouped_matmul
     ops.impl("moe_grouped_matmul", &vllm_ascend::meta::moe_grouped_matmul_meta);
     ops.impl("moe_gating_top_k_hash", &vllm_ascend::meta::moe_gating_top_k_hash_meta);
