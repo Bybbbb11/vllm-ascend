@@ -12,13 +12,12 @@
 import torch
 from vllm.triton_utils import tl, triton
 
-from .utils import prepare_chunk_indices, safe_exp
-
 from vllm_ascend.utils import (
     AscendDeviceType,
     get_ascend_device_type,
 )
 
+from .utils import prepare_chunk_indices, safe_exp
 
 @triton.heuristics(
     {
@@ -143,7 +142,6 @@ def chunk_scaled_dot_kkt_fwd(
         num_warps=8,
         num_stages=3,
         multibuffer=True,
-        **({"disable_tightly_coupled_buffer_reuse": True}
-        if get_ascend_device_type() == AscendDeviceType.A5 else {}),
+        **({"disable_tightly_coupled_buffer_reuse": True} if get_ascend_device_type() == AscendDeviceType.A5 else {}),
     )
     return A

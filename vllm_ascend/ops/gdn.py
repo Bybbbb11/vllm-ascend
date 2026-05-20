@@ -37,9 +37,16 @@ from vllm_ascend.ops.triton.fla.fused_qkvzba_split_reshape import fused_qkvzba_s
 from vllm_ascend.ops.triton.fla.utils import clear_ssm_states
 from vllm_ascend.ops.triton.fused_gdn_gating import fused_gdn_gating_patch
 <<<<<<< HEAD
+<<<<<<< HEAD
 from vllm_ascend.utils import vllm_version_is, weak_ref_tensors
 =======
+=======
+<<<<<<< HEAD
+>>>>>>> cc266e44 (clean code)
 from vllm_ascend.ops.triton.mamba.causal_conv1d import causal_conv1d_update_npu
+=======
+
+>>>>>>> 8309d915 (clean code)
 from vllm_ascend.utils import (
     AscendDeviceType,
     get_ascend_device_type,
@@ -666,16 +673,16 @@ class AscendGatedDeltaNetAttention(GatedDeltaNetAttention):
                 ).unsqueeze(0)
             else:
                 core_attn_out_non_spec = torch.ops._C_ascend.npu_recurrent_gated_delta_rule_custom(
-                query=query_non_spec.squeeze(0),
-                key=key_non_spec.squeeze(0),
-                value=value_non_spec.squeeze(0),
-                g=g_non_spec.squeeze(0) if g_non_spec is not None else g_non_spec,
-                beta=beta_non_spec.squeeze(0) if beta_non_spec is not None else beta_non_spec,
-                state=ssm_state,
-                scale_value=key_non_spec.shape[-1] ** -0.5,
-                actual_seq_lengths=actual_seq_lengths,
-                ssm_state_indices=non_spec_state_indices_tensor,
-            ).unsqueeze(0)
+                    query=query_non_spec.squeeze(0),
+                    key=key_non_spec.squeeze(0),
+                    value=value_non_spec.squeeze(0),
+                    g=g_non_spec.squeeze(0) if g_non_spec is not None else g_non_spec,
+                    beta=beta_non_spec.squeeze(0) if beta_non_spec is not None else beta_non_spec,
+                    state=ssm_state,
+                    scale_value=key_non_spec.shape[-1] ** -0.5,
+                    actual_seq_lengths=actual_seq_lengths,
+                    ssm_state_indices=non_spec_state_indices_tensor,
+                ).unsqueeze(0)
         else:
             core_attn_out_non_spec, last_recurrent_state = None, None
 

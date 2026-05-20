@@ -2,9 +2,9 @@ import torch
 from torch.library import Library
 
 from vllm_ascend.utils import (
-    is_310p,
     AscendDeviceType,
     get_ascend_device_type,
+    is_310p,
 )
 
 # This file provides a template and registration utilities for writing "meta" implementations
